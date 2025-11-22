@@ -51,6 +51,9 @@ public:
   }
 
   bool is_booked() const { return booked; }
+  int get_capacity() const { return capacity; }
+  int get_price_per_night() const { return price_per_night; }
+  int get_room_number() const { return room_number; }
 };
 
 class Hotel {
@@ -95,6 +98,17 @@ public:
 
     return free_rooms;
   }
+
+  std::vector<Room> get_free_rooms_by_size(int size) {
+    std::vector<Room> free_rooms;
+
+    for (const auto &room : rooms) {
+      if (!room.is_booked() && room.get_capacity() == size)
+        free_rooms.push_back(room);
+    }
+
+    return free_rooms;
+  }
 };
 
 class IOHandler {
@@ -121,11 +135,21 @@ public:
     while (true) {
       getline(std::cin, input);
 
-      if (input == "1" || input == "2")
-        return std::stoi(input);
+      if (input == "1" || input == "2") {
+        int capacity = std::stoi(input);
 
-      std::cout << "Virheellinen huonekoko. Anna joko \"1\" tai \"2\""
-                << std::endl;
+        // Tarkistetaan onko halutun kokoisia huoneita saatavilla
+        if (hotel.get_free_rooms_by_size(capacity).size() != 0) {
+          return capacity;
+        } else {
+          std::cout << "Haluamaasi huonekokoa ei ole valitettavasti saatavilla "
+                       "tällä hetkellä."
+                    << std::endl;
+        }
+      } else {
+        std::cout << "Virheellinen huonekoko. Anna joko \"1\" tai \"2\""
+                  << std::endl;
+      }
     }
   }
 
@@ -157,14 +181,17 @@ int main() {
   IOHandler io(hotel);
 
   std::cout << "Tervetuloa hotellijärjestelmään." << std::endl;
+
   bool running = true;
   while (running) {
     io.print_intro();
-    io.read_reservation_capacity();
-    io.read_reservation_nights();
 
-    // Ajon pausettamiseksi testauksen aikana POISTA!!!
-    std::cin >> running;
+    int requested_size = io.read_reservation_capacity();
+
+    if (hotel.get_free_rooms_by_size(requested_size).size() == 0) {
+    }
+
+    io.read_reservation_nights();
   }
 
   return 0;
