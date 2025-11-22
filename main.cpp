@@ -28,10 +28,9 @@ public:
   }
 
   void print_room_info() const {
-    std::cout << "Huone numero: " << room_number
-              << ", hinta yöltä: " << price_per_night
-              << ", Varattu: " << (is_booked ? "Kyllä" : "Ei")
-              << ", monenko huone: " << capacity << std::endl;
+    std::cout << "Numero: " << room_number << ", hinta: " << price_per_night
+              << ", varattu: " << (is_booked ? "Kyllä" : "Ei")
+              << ", kapasiteetti: " << capacity << std::endl;
   }
 };
 
@@ -61,6 +60,8 @@ public:
     for (const auto &room : rooms) {
       room.print_room_info();
     }
+
+    std::cout << "Huoneiden määrä: " << rooms.size() << std::endl;
   }
 
   int get_room_count() const { return rooms.size(); }
@@ -72,8 +73,6 @@ int main() {
 
   Hotel hotel(gen);
   hotel.print_rooms_info();
-
-  std::cout << hotel.get_room_count() << std::endl;
 
   return 0;
 }
