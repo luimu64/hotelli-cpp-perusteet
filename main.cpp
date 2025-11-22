@@ -6,8 +6,6 @@
 
 const int room_count_min = 40;
 const int room_count_max = 300;
-const int price_min = 80;
-const int price_max = 100;
 
 // Varmistaa että huoneiden määrä on parillinen.
 inline int make_even(int n) { return n - n % 2; }
