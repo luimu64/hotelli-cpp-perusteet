@@ -35,8 +35,9 @@ void Hotel::print_rooms_info() const {
 }
 
 // Vaihtaa vapaan varatuksi ja toisinpäin
-void Hotel::change_booking_status(int number) {
-  rooms[number].set_booked(!rooms[number].is_booked());
+void Hotel::activate_reservation(Reservation reservation) {
+  rooms[reservation.room_number].set_booked(true);
+  rooms[reservation.room_number].set_reserved_by(reservation.customer_name);
 };
 
 // Asettaa huoneet ladatuiksi
@@ -85,4 +86,24 @@ Room Hotel::get_best_room(int capacity) {
 
   // Palautetaan halvin huone
   return temp_rooms[0];
+}
+
+void Hotel::print_reservation_info(std::string customer_name) const {
+  bool found = false;
+  for (const auto &room : rooms) {
+    // Tarkistetaan sisältyykö hakusana nimeen (substring search)
+    // Tai onko täsmälleen sama. Tässä käytetään find.
+    if (room.is_booked() &&
+        room.get_reserved_by().find(customer_name) != std::string::npos) {
+      std::cout << "\n\nVaraus löytyi:\n" << std::endl;
+      room.print_room_info();
+      print_newlines();
+      found = true;
+    }
+  }
+
+  if (!found) {
+    std::cout << "\n\nEi varauksia hakusanalla: " << customer_name << ".\n"
+              << std::endl;
+  }
 }

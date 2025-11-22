@@ -30,6 +30,8 @@ int main() {
       break;
     } else if (choice == Menu_choice::LIST) {
       hotel.print_rooms_info();
+    } else if (choice == Menu_choice::SEARCH) {
+      io.search_reservation();
     } else if (choice == Menu_choice::NEW) {
       // Otetaan käyttäjältä tiedot varausta varten
       Reservation reservation = io.read_reservation();
@@ -40,7 +42,7 @@ int main() {
         continue;
 
       // Varataan huone
-      hotel.change_booking_status(reservation.room_number);
+      hotel.activate_reservation(reservation);
     }
   }
 

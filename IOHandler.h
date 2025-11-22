@@ -19,6 +19,7 @@ public:
   Menu_choice get_main_loop_choice();
   bool confirm_pricing(int price);
   Reservation read_reservation();
+  void search_reservation();
 };
 
 #endif
