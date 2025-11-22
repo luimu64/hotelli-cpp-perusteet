@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-const int room_count_min = 40;
-const int room_count_max = 300;
+const int room_count_min = 2;
+const int room_count_max = 2;
 const int price_min = 80;
 const int price_max = 100;
 
@@ -19,6 +19,8 @@ bool is_numeric(const std::string &s) {
   // 2. Tarkista ovatko kaikki merkit numeroita
   return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
+
+void print_newlines() { std::cout << "\n" << std::endl; };
 
 struct Reservation {
   std::string customer_name;
@@ -59,6 +61,7 @@ public:
   }
 
   bool is_booked() const { return booked; }
+  void set_booked(bool new_status) { booked = new_status; };
   int get_capacity() const { return capacity; }
   int get_price_per_night() const { return price_per_night; }
   int get_room_number() const { return room_number; }
@@ -129,6 +132,11 @@ public:
 
     return temp_rooms[0];
   }
+
+  // Vaihtaa vapaan varatuksi ja toisinpäin
+  void change_booking_status(int number) {
+    rooms[number].set_booked(!rooms[number].is_booked());
+  };
 };
 
 class IOHandler {
@@ -141,28 +149,27 @@ public:
   void print_intro() {
     std::cout << "Huoneita saatavilla: " << hotel.get_free_rooms().size()
               << "\nHuoneita varattu: "
-              << hotel.get_room_count() - hotel.get_free_rooms().size() << "\n"
+              << hotel.get_room_count() - hotel.get_free_rooms().size()
+              << "\n\n"
               << std::endl;
   }
 
   bool confirm_pricing(int price) {
-    std::cout << "Halvin huone haluamallasi koolla maksaa" << price
-              << " euroa. " << "Vahvistetaanko varaus? \"K\"/\"E\""
-              << std::endl;
+    std::cout << "Halvin huone haluamallasi koolla maksaa " << price
+              << " euroa. " << "\nVahvistetaanko varaus? K/E" << std::endl;
 
     std::string input;
 
-    getline(std::cin, input);
-
     while (true) {
+      getline(std::cin, input);
       if (input == "k" || input == "K") {
-        std::cout << "Kiitos varauksesta!" << std::endl;
+        std::cout << "\n\nKiitos varauksesta!\n\n" << std::endl;
         return true;
       } else if (input == "e" || input == "E") {
-        std::cout << "Varaus peruutettu." << std::endl;
+        std::cout << "\n\nVaraus peruutettu.\n\n" << std::endl;
         return false;
       } else {
-        std::cout << "Vastaa \"K\" tai \"E\"" << std::endl;
+        std::cout << "\n\nVastaa K(yllä) tai E(i)" << std::endl;
       }
     }
   }
@@ -181,10 +188,9 @@ public:
     int requested_capacity;
 
     // Varauksen huoneen koon ottaminen
-    std::cout << "Kuinka monen henkilön huoneen haluat?\n"
-              << "Anna \"1\" tai \"2\": ";
-
     while (true) {
+      std::cout << "Kuinka monen henkilön huoneen haluat?\n"
+                << "Anna \"1\" tai \"2\": ";
       getline(std::cin, input);
 
       if (input == "1" || input == "2") {
@@ -193,38 +199,51 @@ public:
         // Tarkistetaan onko halutun kokoisia huoneita saatavilla
         if (hotel.get_free_rooms_by_size(capacity).size() != 0) {
           requested_capacity = capacity;
+          break;
         } else {
-          std::cout << "Haluamaasi huonekokoa ei ole valitettavasti saatavilla "
-                       "tällä hetkellä."
-                    << std::endl;
+          std::cout
+              << "\nHaluamaasi huonekokoa ei ole valitettavasti saatavilla "
+                 "tällä hetkellä."
+              << std::endl;
         }
       } else {
-        std::cout << "Virheellinen huonekoko. Anna joko \"1\" tai \"2\""
-                  << std::endl;
+        std::cout << "\nVirheellinen huonekoko.";
       }
     }
 
+    print_newlines();
+
     // Varauksen yö määrän ottaminen
-    std::cout << "Kuinka moneksi yöksi haluat varata huoneen?\n"
-              << "Anna mikä tahansa numero: ";
 
     while (true) {
+      std::cout << "Kuinka moneksi yöksi haluat varata huoneen?\n"
+                << "Anna mikä tahansa numero: ";
       getline(std::cin, input);
 
       if (is_numeric(input)) {
         new_reservation.nights = std::stoi(input);
+        break;
       } else {
-        std::cout << "Virheellinen yö määrä. Anna numero!" << std::endl;
+        std::cout << "\nVirheellinen yö määrä." << std::endl;
       }
     }
 
+    print_newlines();
+
     // Varauksen nimen ottaminen
-    std::cout << "Anna nimi jolla varaus tehdään: " << std::endl;
+    std::cout << "Anna nimi jolla varaus tehdään: ";
 
     while (true) {
       getline(std::cin, input);
-      new_reservation.customer_name = input;
+      if (input != "") {
+        new_reservation.customer_name = input;
+        break;
+      } else {
+        std::cout << "\nNimi ei voi olla tyhjä!" << std::endl;
+      }
     }
+
+    print_newlines();
 
     // Hakee hotellista halvimman oikean kokoisen huoneen
     Room best_room = hotel.get_best_room(requested_capacity);
@@ -262,6 +281,9 @@ int main() {
     // hyväksy hintaa
     if (!io.confirm_pricing(reservation.total_price))
       continue;
+
+    // Varataan huone
+    hotel.change_booking_status(reservation.room_number);
   }
 
   return 0;
