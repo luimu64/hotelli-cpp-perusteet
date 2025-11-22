@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <random>
+#include <string>
 #include <vector>
 
 const int room_count_min = 40;
@@ -18,6 +19,13 @@ bool is_numeric(const std::string &s) {
   // 2. Tarkista ovatko kaikki merkit numeroita
   return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
+
+struct Reservation {
+  std::string customer_name;
+  int room_number;
+  int nights;
+  int total_price;
+};
 
 class Room {
 private:
@@ -109,6 +117,18 @@ public:
 
     return free_rooms;
   }
+
+  // Hakee halvimman huoneen numeron halutulla koolla
+  Room get_best_room(int capacity) {
+    std::vector<Room> temp_rooms = rooms;
+    std::sort(temp_rooms.begin(), temp_rooms.end(),
+              [](const Room &a, const Room &b) {
+                // Palauta true, jos a tulee ennen b:tä (pienempi hinta ensin)
+                return a.get_price_per_night() < b.get_price_per_night();
+              });
+
+    return temp_rooms[0];
+  }
 };
 
 class IOHandler {
@@ -125,10 +145,42 @@ public:
               << std::endl;
   }
 
-  int read_reservation_capacity() {
+  bool confirm_pricing(int price) {
+    std::cout << "Halvin huone haluamallasi koolla maksaa" << price
+              << " euroa. " << "Vahvistetaanko varaus? \"K\"/\"E\""
+              << std::endl;
+
     std::string input;
 
-    // Otetaan ensin haluttu huonekoko
+    getline(std::cin, input);
+
+    while (true) {
+      if (input == "k" || input == "K") {
+        std::cout << "Kiitos varauksesta!" << std::endl;
+        return true;
+      } else if (input == "e" || input == "E") {
+        std::cout << "Varaus peruutettu." << std::endl;
+        return false;
+      } else {
+        std::cout << "Vastaa \"K\" tai \"E\"" << std::endl;
+      }
+    }
+  }
+
+  Reservation read_reservation() {
+    /*
+    struct Reservation {
+      std::string customer_name;
+      int room_number;
+      int nights;
+      int total_price;
+    };
+    */
+    std::string input;
+    Reservation new_reservation;
+    int requested_capacity;
+
+    // Varauksen huoneen koon ottaminen
     std::cout << "Kuinka monen henkilön huoneen haluat?\n"
               << "Anna \"1\" tai \"2\": ";
 
@@ -140,7 +192,7 @@ public:
 
         // Tarkistetaan onko halutun kokoisia huoneita saatavilla
         if (hotel.get_free_rooms_by_size(capacity).size() != 0) {
-          return capacity;
+          requested_capacity = capacity;
         } else {
           std::cout << "Haluamaasi huonekokoa ei ole valitettavasti saatavilla "
                        "tällä hetkellä."
@@ -151,23 +203,40 @@ public:
                   << std::endl;
       }
     }
-  }
 
-  int read_reservation_nights() {
-    std::string input;
-
-    // Otetaan ensin haluttu huonekoko
+    // Varauksen yö määrän ottaminen
     std::cout << "Kuinka moneksi yöksi haluat varata huoneen?\n"
               << "Anna mikä tahansa numero: ";
 
     while (true) {
       getline(std::cin, input);
 
-      if (is_numeric(input))
-        return std::stoi(input);
-
-      std::cout << "Virheellinen yö määrä. Anna numero!" << std::endl;
+      if (is_numeric(input)) {
+        new_reservation.nights = std::stoi(input);
+      } else {
+        std::cout << "Virheellinen yö määrä. Anna numero!" << std::endl;
+      }
     }
+
+    // Varauksen nimen ottaminen
+    std::cout << "Anna nimi jolla varaus tehdään: " << std::endl;
+
+    while (true) {
+      getline(std::cin, input);
+      new_reservation.customer_name = input;
+    }
+
+    // Hakee hotellista halvimman oikean kokoisen huoneen
+    Room best_room = hotel.get_best_room(requested_capacity);
+
+    // Hakee huoneen numeron
+    new_reservation.room_number = best_room.get_room_number();
+
+    // Laskee kokonaishinnan varaukselle
+    new_reservation.total_price =
+        best_room.get_price_per_night() * new_reservation.nights;
+
+    return new_reservation;
   }
 };
 
@@ -186,12 +255,13 @@ int main() {
   while (running) {
     io.print_intro();
 
-    int requested_size = io.read_reservation_capacity();
+    // Otetaan käyttäjältä tiedot varausta varten
+    Reservation reservation = io.read_reservation();
 
-    if (hotel.get_free_rooms_by_size(requested_size).size() == 0) {
-    }
-
-    io.read_reservation_nights();
+    // Skippaa loppuloopin ja aloittaa varauksen teon uudestaan jos käyttäjä ei
+    // hyväksy hintaa
+    if (!io.confirm_pricing(reservation.total_price))
+      continue;
   }
 
   return 0;
