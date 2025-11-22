@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <random>
 #include <string>
@@ -6,6 +7,7 @@
 
 const int room_count_min = 40;
 const int room_count_max = 300;
+const std::string DATA_FILE = "hotel_data.txt";
 
 // Varmistaa että huoneiden määrä on parillinen.
 inline int make_even(int n) { return n - n % 2; }
@@ -38,6 +40,7 @@ private:
   std::vector<int> sale_percentages = {0, 10, 20};
 
 public:
+  // Käytetään ensimmäisellä ajokerralla ja kun tiedostoa ei ole
   Room(int room_number, int capacity, std::mt19937 &gen)
       : room_number(room_number), capacity(capacity) {
 
@@ -53,6 +56,11 @@ public:
 
     booked = false;
   }
+
+  // Käytetään kun aikaisemmat tiedot on
+  Room(int room_number, int capacity, int price, bool booked)
+      : price_per_night(price), booked(booked), capacity(capacity),
+        room_number(room_number) {}
 
   void print_room_info() const {
     std::cout << "Numero: " << room_number << ", hinta: " << price_per_night
@@ -97,8 +105,17 @@ public:
     std::cout << "Huoneiden määrä: " << rooms.size() << std::endl;
   }
 
-  int get_room_count() const { return rooms.size(); }
+  // Vaihtaa vapaan varatuksi ja toisinpäin
+  void change_booking_status(int number) {
+    rooms[number].set_booked(!rooms[number].is_booked());
+  };
 
+  void set_rooms(const std::vector<Room> &loaded_rooms) {
+    rooms = loaded_rooms;
+  }
+
+  int get_room_count() const { return rooms.size(); }
+  const std::vector<Room> &get_all_rooms() const { return rooms; }
   std::vector<Room> get_free_rooms() {
     std::vector<Room> free_rooms;
 
@@ -132,11 +149,6 @@ public:
 
     return temp_rooms[0];
   }
-
-  // Vaihtaa vapaan varatuksi ja toisinpäin
-  void change_booking_status(int number) {
-    rooms[number].set_booked(!rooms[number].is_booked());
-  };
 };
 
 class IOHandler {
@@ -145,6 +157,46 @@ private:
 
 public:
   IOHandler(Hotel &hotel) : hotel(hotel) {}
+
+  void save_hotel_state() {
+    std::ofstream file(DATA_FILE);
+    if (file.is_open()) {
+      const auto &rooms = hotel.get_all_rooms();
+      // Formaatti: numero kapasiteetti hinta varattu(0/1)
+      for (const auto &room : rooms) {
+        file << room.get_room_number() << " " << room.get_capacity() << " "
+             << room.get_price_per_night() << " " << room.is_booked() << "\n";
+      }
+      file.close();
+      std::cout << "Tiedot tallennettu tiedostoon: " << DATA_FILE << std::endl;
+    } else {
+      std::cerr << "Virhe tallennettaessa tiedostoa!" << std::endl;
+    }
+  }
+
+  bool load_hotel_state() {
+    std::ifstream file(DATA_FILE);
+    if (!file.is_open()) {
+      return false; // Tiedostoa ei ole, käytetään satunnaisia huoneita
+    }
+
+    std::vector<Room> loaded_rooms;
+    int num, cap, price;
+    bool booked;
+
+    while (file >> num >> cap >> price >> booked) {
+      loaded_rooms.emplace_back(num, cap, price, booked);
+    }
+    file.close();
+
+    if (!loaded_rooms.empty()) {
+      hotel.set_rooms(loaded_rooms);
+      std::cout << "Tiedot ladattu onnistuneesti tiedostosta." << std::endl;
+      return true;
+    }
+
+    return false;
+  }
 
   Menu_choice get_main_loop_choice() {
     std::cout << "Huoneita saatavilla: " << hotel.get_free_rooms().size()
@@ -286,12 +338,15 @@ int main() {
 
   std::cout << "Tervetuloa hotellijärjestelmään." << std::endl;
 
+  io.load_hotel_state();
+
   bool running = true;
   while (running) {
     Menu_choice choice = io.get_main_loop_choice();
 
     if (choice == Menu_choice::QUIT) {
       std::cout << "Näkemiin!" << std::endl;
+      io.save_hotel_state();
       break;
     } else if (choice == Menu_choice::LIST) {
       hotel.print_rooms_info();
