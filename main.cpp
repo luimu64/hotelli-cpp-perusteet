@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -7,8 +8,7 @@ const int room_count_max = 300;
 const int price_min = 80;
 const int price_max = 100;
 
-// Kiva avustusfunktio jota käytetään tasan kerran. Varmistaa että huoneiden
-// määrä on parillinen.
+// Varmistaa että huoneiden määrä on parillinen.
 inline int make_even(int n) { return n - n % 2; }
 
 class Room {
@@ -17,13 +17,22 @@ private:
   bool is_booked;
   int capacity;
   int room_number;
+  std::vector<int> sale_percentages = {0, 10, 20};
 
 public:
   Room(int room_number, int capacity, std::mt19937 &gen)
       : room_number(room_number), capacity(capacity) {
 
-    std::uniform_int_distribution<> price_dist(price_min, price_max);
-    price_per_night = price_dist(gen);
+    price_per_night = capacity == 1 ? 100 : 150;
+
+    // Valitse alennusprosentti
+    int selected_percentage;
+    std::sample(sale_percentages.begin(), sale_percentages.end(),
+                &selected_percentage, 1, gen);
+
+    // Lasketaan lopullinen alennettu hinta
+    price_per_night = (price_per_night * (100 - selected_percentage)) / 100;
+
     is_booked = false;
   }
 
