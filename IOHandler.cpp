@@ -1,8 +1,10 @@
 #include "IOHandler.h"
 #include "Hotel.h"
 
+// Kostruktori tallentaa hotelli-instanssin käyttöä varten
 IOHandler::IOHandler(Hotel &hotel) : hotel(hotel) {}
 
+// Tallentaa hotellin tilan tiedostoon sulkiessa ohjelman
 void IOHandler::save_hotel_state() {
   std::ofstream file(DATA_FILE);
   if (file.is_open()) {
@@ -19,6 +21,7 @@ void IOHandler::save_hotel_state() {
   }
 }
 
+// Lataa hotellin tilan tiedostosta avatessa ohjelman
 bool IOHandler::load_hotel_state() {
   std::ifstream file(DATA_FILE);
   if (!file.is_open()) {
@@ -29,12 +32,14 @@ bool IOHandler::load_hotel_state() {
   int num, cap, price;
   bool booked;
 
+  // Käydään tiedosto läpi ja tallennetaan tiedot muuttujiin/vektoriin
   while (file >> num >> cap >> price >> booked) {
     loaded_rooms.emplace_back(num, cap, price, booked);
   }
   file.close();
 
   if (!loaded_rooms.empty()) {
+    // Korvataan alussa generoidut huoneet
     hotel.set_rooms(loaded_rooms);
     std::cout << "Tiedot ladattu onnistuneesti tiedostosta." << std::endl;
     return true;
@@ -43,21 +48,28 @@ bool IOHandler::load_hotel_state() {
   return false;
 }
 
+// Ajetaan aina ohjelman alussa ja varausten välillä.
+// Printtaa valinnat ja palauta käyttäjän valinta
 Menu_choice IOHandler::get_main_loop_choice() {
-  std::cout << "Huoneita saatavilla: " << hotel.get_free_rooms().size()
-            << "\nHuoneita varattu: "
-            << hotel.get_room_count() - hotel.get_free_rooms().size()
-            << "\n\nUusi varaus: U | Listaa huoneet: L | Sulje: X" << std::endl;
+  std::cout
+      << "Huoneita saatavilla: " << hotel.get_free_rooms().size()
+      << "\nHuoneita varattu: "
+      << hotel.get_room_count() - hotel.get_free_rooms().size()
+      << "\n\nUusi varaus: U | Listaa huoneet: L | Hae varaus: H | Sulje: X"
+      << std::endl;
 
   std::string input;
 
   while (true) {
     getline(std::cin, input);
     print_newlines();
+    // Käydään käyttäjän syöte läpi
     if (input == "u" || input == "U") {
       return Menu_choice::NEW;
     } else if (input == "l" || input == "L") {
       return Menu_choice::LIST;
+    } else if (input == "h" || input == "H") {
+      return Menu_choice::SEARCH;
     } else if (input == "x" || input == "X") {
       return Menu_choice::QUIT;
     } else {
@@ -66,6 +78,7 @@ Menu_choice IOHandler::get_main_loop_choice() {
   }
 }
 
+// Varmistetaan käyttäjältä haluaako hän tehdä varauksen
 bool IOHandler::confirm_pricing(int price) {
   std::cout << "Halvin huone haluamallasi koolla maksaa " << price << " euroa. "
             << "\nVahvistetaanko varaus? K/E" << std::endl;
@@ -86,6 +99,7 @@ bool IOHandler::confirm_pricing(int price) {
   }
 }
 
+// Muodostaa varauksen käyttäjän syötteen perusteella
 Reservation IOHandler::read_reservation() {
   /*
   struct Reservation {
@@ -124,8 +138,7 @@ Reservation IOHandler::read_reservation() {
 
   print_newlines();
 
-  // Varauksen yö määrän ottaminen
-
+  // Varauksen yömäärän ottaminen
   while (true) {
     std::cout << "Kuinka moneksi yöksi haluat varata huoneen?\n"
               << "Anna mikä tahansa numero: ";

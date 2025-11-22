@@ -11,18 +11,21 @@ int main() {
 
   // Luodaan hotelli ja kaikki sen huoneet
   Hotel hotel(gen);
+  // Luodaan objekti jonka kautta kaikki
   IOHandler io(hotel);
 
   std::cout << "Tervetuloa hotellijärjestelmään." << std::endl;
 
+  // Ladataan aikaisemman hotellin status tiedostosta jos se on olemassa
   io.load_hotel_state();
 
-  bool running = true;
-  while (running) {
+  while (true) {
+    // Printataan päämenu ja kysytään käyttäjältä mitä se haluaa tehdä
     Menu_choice choice = io.get_main_loop_choice();
 
     if (choice == Menu_choice::QUIT) {
       std::cout << "Näkemiin!" << std::endl;
+      // Tallennetaan muutokset tiedostoon
       io.save_hotel_state();
       break;
     } else if (choice == Menu_choice::LIST) {

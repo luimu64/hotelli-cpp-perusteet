@@ -12,6 +12,7 @@ private:
   bool booked;
   int capacity;
   int room_number;
+  std::string reserved_by;
 
 public:
   // Konstruktori uuden luomiseen (arpoo hinnan)
@@ -23,6 +24,7 @@ public:
   void print_room_info() const;
   bool is_booked() const;
   void set_booked(bool new_status);
+  void set_reserved_by(std::string new_reservant);
   int get_capacity() const;
   int get_price_per_night() const;
   int get_room_number() const;

@@ -18,7 +18,7 @@ struct Reservation {
   int total_price;
 };
 
-enum class Menu_choice { NEW, LIST, QUIT };
+enum class Menu_choice { NEW, LIST, SEARCH, QUIT };
 
 // Inline-funktiot (voidaan määritellä headerissa)
 inline int make_even(int n) { return n - n % 2; }

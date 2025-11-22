@@ -4,11 +4,14 @@
 Room::Room(int room_number, int capacity, std::mt19937 &gen)
     : capacity(capacity), room_number(room_number) {
 
+  // Käytetään yhtä kahdesta hinnasta riippuen onko yhden vai kahden hengen
+  // huone
   price_per_night = capacity == 1 ? 100 : 150;
 
+  // Alennusprosenttien määritelmä
   std::vector<int> percentages = {0, 10, 20};
 
-  // Valitse alennusprosentti
+  // Valitaan alennusprosentti
   int selected_percentage;
   std::sample(percentages.begin(), percentages.end(), &selected_percentage, 1,
               gen);
@@ -16,6 +19,7 @@ Room::Room(int room_number, int capacity, std::mt19937 &gen)
   // Lasketaan lopullinen alennettu hinta
   price_per_night = (price_per_night * (100 - selected_percentage)) / 100;
 
+  // Kaikki huoneet on oletuksena vapaita
   booked = false;
 }
 
@@ -24,12 +28,14 @@ Room::Room(int room_number, int capacity, int price, bool booked)
     : price_per_night(price), booked(booked), capacity(capacity),
       room_number(room_number) {}
 
+// Listaa kaikki hotellin huoneet
 void Room::print_room_info() const {
   std::cout << "Numero: " << room_number << ", hinta: " << price_per_night
             << ", varattu: " << (booked ? "Kyllä" : "Ei")
             << ", kapasiteetti: " << capacity << std::endl;
 }
 
+// Itsestäänselviä settereitä ja gettereitä
 bool Room::is_booked() const { return booked; }
 void Room::set_booked(bool new_status) { booked = new_status; };
 int Room::get_capacity() const { return capacity; }
