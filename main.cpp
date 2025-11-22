@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-const int room_count_min = 2;
-const int room_count_max = 2;
+const int room_count_min = 40;
+const int room_count_max = 300;
 const int price_min = 80;
 const int price_max = 100;
 
@@ -28,6 +28,8 @@ struct Reservation {
   int nights;
   int total_price;
 };
+
+enum class Menu_choice { NEW, LIST, QUIT };
 
 class Room {
 private:
@@ -123,7 +125,7 @@ public:
 
   // Hakee halvimman huoneen numeron halutulla koolla
   Room get_best_room(int capacity) {
-    std::vector<Room> temp_rooms = rooms;
+    std::vector<Room> temp_rooms = get_free_rooms_by_size(capacity);
     std::sort(temp_rooms.begin(), temp_rooms.end(),
               [](const Room &a, const Room &b) {
                 // Palauta true, jos a tulee ennen b:tä (pienempi hinta ensin)
@@ -146,12 +148,28 @@ private:
 public:
   IOHandler(Hotel &hotel) : hotel(hotel) {}
 
-  void print_intro() {
+  Menu_choice get_main_loop_choice() {
     std::cout << "Huoneita saatavilla: " << hotel.get_free_rooms().size()
               << "\nHuoneita varattu: "
               << hotel.get_room_count() - hotel.get_free_rooms().size()
-              << "\n\n"
+              << "\n\nUusi varaus: U | Listaa huoneet: L | Sulje: X"
               << std::endl;
+
+    std::string input;
+
+    while (true) {
+      getline(std::cin, input);
+      print_newlines();
+      if (input == "u" || input == "U") {
+        return Menu_choice::NEW;
+      } else if (input == "l" || input == "L") {
+        return Menu_choice::LIST;
+      } else if (input == "x" || input == "X") {
+        return Menu_choice::QUIT;
+      } else {
+        std::cout << "\n\nVastaa U(uusi) tai L(istaa)" << std::endl;
+      }
+    }
   }
 
   bool confirm_pricing(int price) {
@@ -272,18 +290,25 @@ int main() {
 
   bool running = true;
   while (running) {
-    io.print_intro();
+    Menu_choice choice = io.get_main_loop_choice();
 
-    // Otetaan käyttäjältä tiedot varausta varten
-    Reservation reservation = io.read_reservation();
+    if (choice == Menu_choice::QUIT) {
+      std::cout << "Näkemiin!" << std::endl;
+      break;
+    } else if (choice == Menu_choice::LIST) {
+      hotel.print_rooms_info();
+    } else if (choice == Menu_choice::NEW) {
+      // Otetaan käyttäjältä tiedot varausta varten
+      Reservation reservation = io.read_reservation();
 
-    // Skippaa loppuloopin ja aloittaa varauksen teon uudestaan jos käyttäjä ei
-    // hyväksy hintaa
-    if (!io.confirm_pricing(reservation.total_price))
-      continue;
+      // Skippaa loppuloopin ja aloittaa varauksen teon uudestaan jos käyttäjä
+      // ei hyväksy hintaa
+      if (!io.confirm_pricing(reservation.total_price))
+        continue;
 
-    // Varataan huone
-    hotel.change_booking_status(reservation.room_number);
+      // Varataan huone
+      hotel.change_booking_status(reservation.room_number);
+    }
   }
 
   return 0;
